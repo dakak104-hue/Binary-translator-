@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binary ↔ English Translator</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background-color: #f8f9fa;
+      color: #212529;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .container {
+      display: grid;
+      gap: 1.5rem;
+    }
+    .box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    textarea {
+      width: 100%;
+      height: 140px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.95rem;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.15);
+    }
+    .error {
+      color: #dc3545;
+      font-size: 0.85rem;
+      min-height: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Binary ↔ English Translator</h1>
+  
+  <div class="container">
+    <div class="box">
+      <label for="englishInput">English Text</label>
+      <textarea id="englishInput" placeholder="Type English text here..."></textarea>
+    </div>
+
+    <div class="box">
+      <label for="binaryInput">Binary (8-bit UTF-8)</label>
+      <textarea id="binaryInput" placeholder="Paste or type binary (e.g., 01001000 01101001)..."></textarea>
+      <div id="errorMsg" class="error"></div>
+    </div>
+  </div>
+
+  <script>
+    const englishInput = document.getElementById('englishInput');
+    const binaryInput = document.getElementById('binaryInput');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // Convert English string to 8-bit space-separated binary
+    function textToBinary(text) {
+      const encoder = new TextEncoder();
+      const bytes = encoder.encode(text);
+      return Array.from(bytes)
+        .map(byte => byte.toString(2).padStart(8, '0'))
+        .join(' ');
+    }
+
+    // Convert binary string (spaced or continuous) back to English text
+    function binaryToText(binary) {
+      const cleaned = binary.replace(/\s+/g, '');
+      if (!cleaned) return '';
+
+      if (!/^[01]+$/.test(cleaned)) {
+        throw new Error('Invalid input: Binary must contain only 0s and 1s.');
+      }
+      if (cleaned.length % 8 !== 0) {
+        throw new Error('Incomplete byte: Binary length must be a multiple of 8 bits.');
+      }
+
+      const bytes = new Uint8Array(cleaned.length / 8);
+      for (let i = 0; i < cleaned.length; i += 8) {
+        bytes[i / 8] = parseInt(cleaned.slice(i, i + 8), 2);
+      }
+
+      const decoder = new TextDecoder('utf-8', { fatal: true });
+      return decoder.decode(bytes);
+    }
+
+    // Live translation listeners
+    englishInput.addEventListener('input', () => {
+      errorMsg.textContent = '';
+      binaryInput.value = textToBinary(englishInput.value);
+    });
+
+    binaryInput.addEventListener('input', () => {
+      try {
+        errorMsg.textContent = '';
+        englishInput.value = binaryToText(binaryInput.value);
+      } catch (err) {
+        errorMsg.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
